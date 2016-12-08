@@ -1,0 +1,22 @@
+# IntelliJ project files
+.idea
+*.iml
+out
+gen
+
+# SBT template
+target/
+lib_managed/
+src_managed/
+project/boot/
+.cache
+
+# Scala template
+*.class
+*.log
+
+# sbt specific
+.lib/
+dist/*
+project/plugins/project/
+
