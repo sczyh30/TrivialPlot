@@ -42,7 +42,7 @@ case object LE extends Token
 case object GE extends Token
 
 case object ADD extends Token
-case object MINUS extends Token
+case object SUB extends Token
 case object MUL extends Token
 case object DIV extends Token
 case object POWER extends Token

@@ -12,7 +12,7 @@ sealed trait ASTNode
   */
 sealed trait Expr extends ASTNode
 
-case class UnaryOp(op: Token, x: Expr) extends Expr
+case class UnaryOp(op: Token)(x: Expr) extends Expr
 case class BinOp(op: Token, left: Expr, right: Expr) extends Expr
 case class Ref(name: String) extends Expr
 case class Num(x: Double) extends Expr

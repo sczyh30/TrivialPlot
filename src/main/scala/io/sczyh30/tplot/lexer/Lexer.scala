@@ -46,7 +46,7 @@ class Lexer {
     "<" -> LT,
     ">" -> GT,
     "+" -> ADD,
-    "-" -> MINUS,
+    "-" -> SUB,
     "*" -> MUL,
     "/" -> DIV
   )
