@@ -1,7 +1,7 @@
 package io.sczyh30.tplot.lexer
 
 /**
-  * Token.
+  * Token ADT.
   */
 sealed trait Token
 
@@ -9,6 +9,7 @@ case class ATOM(x: String) extends Token
 case class NUMBER(x: Double) extends Token
 case class UNKNOWN(part: String) extends Token
 case object ERROR extends Token
+case object END extends Token
 
 case object COMMA extends Token
 case object SEMICOLON extends Token
@@ -28,7 +29,7 @@ case object DRAW extends Token
 case object FOR extends Token
 case object FROM extends Token
 case object TO extends Token
-case object LET extends Token /* reserved */
+case object LET extends Token
 
 case object AND extends Token
 case object OR extends Token

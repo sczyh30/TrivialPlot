@@ -22,7 +22,7 @@ object Runner {
 
   def test(filename: String): List[Token] = {
     val src = Source.fromFile(filename).getLines.mkString("\n")
-    new Lexer().fuckme(src.toCharArray)
+    new Lexer().go(src.toCharArray)
   }
 
   def runFrom(filename: String): Unit = {

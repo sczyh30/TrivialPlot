@@ -1,10 +1,11 @@
 package io.sczyh30.tplot.lexer
 
 import scala.language.implicitConversions
-import scala.collection.immutable.HashMap
-import Character.{isDigit, isAlphabetic => isAlpha, isSpaceChar}
 
+import scala.collection.immutable.HashMap
 import scala.reflect.ClassTag
+
+import Character.{isDigit, isAlphabetic => isAlpha, isSpaceChar}
 
 /**
   * TrivialPlot lexer class.
@@ -24,11 +25,11 @@ class Lexer {
   val keywordMap = HashMap(
     "is" -> IS,
     "=" -> IS,
-    "origin" -> ORIGIN,
-    "scale" -> SCALE,
-    "rot" -> ROT,
-    "where" -> WHERE,
-    "color" -> COLOR,
+    // "origin" -> ORIGIN,
+    // "scale" -> SCALE,
+    // "rot" -> ROT,
+    // "where" -> WHERE,
+    // "color" -> COLOR,
     "step" -> STEP,
     "draw" -> DRAW,
     "for" -> FOR,
@@ -41,15 +42,9 @@ class Lexer {
     "}" -> RB,
     "(" -> LP,
     ")" -> RP,
-    "&&" -> AND,
-    "||" -> OR,
     "!" -> NOT,
-    "==" -> EQ,
-    "!=" -> NE,
     "<" -> LT,
     ">" -> GT,
-    ">=" -> GE,
-    "<=" -> LE,
     "+" -> ADD,
     "-" -> MINUS,
     "*" -> MUL,
@@ -82,12 +77,12 @@ class Lexer {
 
   def detectUnary(c: Char): Token = detectAtom(Array(c))(UNKNOWN)
 
-  def detectAtom(src: Array[Char])(f: String => Token): Token = {
+  def detectAtom(src: Array[Char])(f: String => Token): Token =
     keywordMap get src match {
       case Some(tk) => tk
       case None => f(src)
     }
-  }
+
 
   def extractAtom(src: Array[Char]): (Token, Array[Char]) = {
     (detectAtom(src.takeWhile(isAtomElem))(ATOM), src.dropWhile(isAtomElem))
@@ -97,24 +92,24 @@ class Lexer {
     src.dropWhile(_ != '\n').drop(1)
   }
 
-  def fuckme(src: Array[Char]): List[Token] = src match {
-    case Array() => List()
-    case Array('/', '/', remains@_*) => fuckme(skipComment(remains))
-    case Array('-', '-', remains@_*) => fuckme(skipComment(remains))
-    case Array('&', '&', remains@_*) => AND :: fuckme(remains)
-    case Array('|', '|', remains@_*) => OR :: fuckme(remains)
-    case Array('!', '=', remains@_*) => NE :: fuckme(remains)
-    case Array('=', '=', remains@_*) => EQ :: fuckme(remains)
-    case Array('<', '=', remains@_*) => LE :: fuckme(remains)
-    case Array('>', '=', remains@_*) => GE :: fuckme(remains)
-    case Array(curr, remains@_*) if isSpace(curr) => fuckme(remains)
+  def go(src: Array[Char]): List[Token] = src match { // TODO: to optimize
+    case Array() => List(END)
+    case Array('/', '/', remains@_*) => go(skipComment(remains))
+    case Array('-', '-', remains@_*) => go(skipComment(remains))
+    case Array('&', '&', remains@_*) => AND :: go(remains)
+    case Array('|', '|', remains@_*) => OR :: go(remains)
+    case Array('!', '=', remains@_*) => NE :: go(remains)
+    case Array('=', '=', remains@_*) => EQ :: go(remains)
+    case Array('<', '=', remains@_*) => LE :: go(remains)
+    case Array('>', '=', remains@_*) => GE :: go(remains)
+    case Array('*', '*', remains@_*) => POWER :: go(remains)
+    case Array(curr, remains@_*) if isSpace(curr) => go(remains)
     case src@Array(curr, _*) if isDigit(curr) =>
       val (num, remains) = extractNumber(src)
-      num :: fuckme(remains)
+      num :: go(remains)
     case src@Array(curr, _*) if isAlpha(curr) =>
       val (tk, remains) = extractAtom(src)
-      tk :: fuckme(remains)
-    case Array(curr, remains@_*) => detectUnary(curr) :: fuckme(remains)
+      tk :: go(remains)
+    case Array(curr, remains@_*) => detectUnary(curr) :: go(remains)
   }
-
 }
