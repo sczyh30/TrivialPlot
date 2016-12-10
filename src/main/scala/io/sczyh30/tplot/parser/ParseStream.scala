@@ -1,8 +1,8 @@
 package io.sczyh30.tplot.parser
 
 import io.sczyh30.tplot.lexer.Token
-import io.sczyh30.tplot.lexer.TokenConverter.ImpCov
 import io.sczyh30.tplot.parser.Parser.{Bad, Result}
+import io.sczyh30.tplot.util.Show._
 
 import scala.util.{Failure, Success}
 
@@ -28,7 +28,7 @@ object ParseStream {
     def |@~>(tk: Token): Result[T] = cur match {
       case Success((t, c :: rs)) =>
         if (c.eq(tk)) Success(t, rs)
-        else Bad(s"Expected token ${tk.string}, but found ${c.string}")
+        else Bad(s"Expected token < ${tk.string} > but found < ${c.string} >\nCurrent rs: ${rs}")
       case failure@Failure(_) => failure
       case _ => Bad("Unexpected error when parsing with |@~> (token-match-strict)")
     }
@@ -50,10 +50,11 @@ object ParseStream {
       *
       * @return result
       */
-    def @|~>(r: Result[T]): Result[T] = r match {
+    @deprecated
+    def @|~>(r: => Result[T]): Result[T] = r match { // FIXME: wrong implementation
       case Success((t, c :: rs)) =>
         if (c.eq(tk)) Success(t, rs)
-        else Bad(s"Expected token ${tk.string}, but found ${c.string}")
+        else Bad(s"Expected token < ${tk.string} > but found < ${c.string} >")
       case failure@Failure(_) => failure
       case _ => Bad("Unexpected error when parsing with @|~> (token-match-strict)")
     }

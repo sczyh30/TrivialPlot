@@ -1,9 +1,8 @@
 package io.sczyh30.tplot.parser
 
 import scala.language.implicitConversions
-
 import io.sczyh30.tplot.lexer._
-import io.sczyh30.tplot.lexer.TokenConverter.ImpCov
+import io.sczyh30.tplot.util.Show._
 import io.sczyh30.tplot.parser.Parser._
 import io.sczyh30.tplot.parser.ParseStream._
 
@@ -58,6 +57,9 @@ class Parser {
     }
   }
 
+  def UnaryOp(op: Token): (Expr) => UnaryOp =
+    (x: Expr) => io.sczyh30.tplot.parser.UnaryOp(op, x)
+
   def parseFactor(tokens: List[Token]): Result[Expr] = tokens match {
     case ADD :: rs => parseFactor(rs)
     case SUB :: rs => parseFactor(rs) <#> UnaryOp(SUB)
@@ -72,21 +74,47 @@ class Parser {
     case (atom, rs) => Success(atom, rs)
   }
 
+  def Funcall(refN: String): (Expr) => Funcall =
+    (x: Expr) => io.sczyh30.tplot.parser.Funcall(Ref(refN), x)
+
   def parseAtom(tokens: List[Token]): Result[Expr] = tokens match {
+    case Nil => Bad(s"Expected any atom but found nothing")
+    case ATOM(func) :: LP :: rs => // Function
+      (parseExpr(rs) |@~> RP) <#> Funcall(func)
     case ATOM(refName) :: rs => Success(Ref(refName), rs)
     case NUMBER(n) :: rs => Success(Num(n), rs)
-    case _ => ???
+    case LP :: rs =>
+      parseList(rs)
+    case x :: _ => Bad(s"Unexpected error when parsing atom: <${x.string}>")
   }
 
-  def parseDraw(tokens: List[Token]): Result[Stmt] = parseExpr(tokens) <#> Draw
+  def parseList(tokens: List[Token]): Result[Expr] = tokens match {
+    case RP :: rs => Success(Unit, rs)
+    case _ => parseExpr(tokens) flatMap {
+      case (fst, COMMA :: rs) => parseExpr(rs) |@~> RP map {
+        case (sec, rsf) => (Vector2(fst, sec), rsf)
+      }
+      case (fst, RP :: rs) => Success(fst, rs)
+      case _ => Bad("Unexpected error when parsing (*)")
+    }
+  }
+
+  def parseDraw(tokens: List[Token]): Result[Stmt] = tokens match {
+    case LP :: rs => for {
+      (x, rs0) <- parseExpr(rs) |@~> COMMA
+      (y, rsf) <- parseExpr(rs0) |@~> RP
+    } yield (Draw(x, y), rsf)
+    case Nil => BadNothing(LP)
+    case c :: _ => BadExpect(LP, c)
+  }
 
   def parseFor(tokens: List[Token]): Result[Stmt] = tokens match {
-    case ATOM(ref) :: rs =>
+    case ATOM(ref) :: FROM :: rs =>
       for {
-        (fromE, rs0) <- FROM @|~> parseExpr(rs)
-        (toE, rs1) <- TO @|~> parseExpr(rs0)
-        (stepE, rs2) <- STEP @|~> parseExpr(rs1)
-        (draw, rsf) <- DRAW @|~> parseDraw(rs2)
+        (fromE, rs0) <- parseExpr(rs) |@~> TO
+        (toE, rs1) <- parseExpr(rs0) |@~> STEP
+        (stepE, rs2) <- parseExpr(rs1) |@~> DRAW
+        (draw, rsf) <- parseDraw(rs2)
       } yield (For(Ref(ref), fromE, toE, stepE, draw), rsf)
     case _ => Bad("Unexpected error when parsing `for` statement")
   }
@@ -109,6 +137,7 @@ class Parser {
       TpLint.lintLet(x, y)
       parseAssign(tokens)
     case SEMICOLON :: rs => parseStmt(rs)
+    case List(EOF) => Success(End, Nil)
     case e :: _ => Bad(s"Expected statement keywords but not match: ${e.string}")
   }
 
@@ -119,22 +148,29 @@ class Parser {
     * @param stmts  current sequence of statements
     * @return sequence of parsed statements
     */
-  def parseR(tokens: List[Token], stmts: List[Result[Stmt]]): List[Result[Stmt]] =
+  def parseR(tokens: List[Token], stmts: List[Result[Stmt]]): List[Result[Stmt]] = {
     (tokens, stmts) match {
-      case (List(END), Nil) => Nil
-      case (List(END), _) => stmts.reverse
+      case (Nil, Nil) => Nil
+      case (Nil, _) => stmts.reverse
       case (_, _) => parseStmt(tokens) match {
+        case Success((End, Nil)) => parseR(Nil, stmts)
         case succ@Success((_, rs)) => parseR(rs, succ :: stmts)
         case err@Failure(_) => List(err)
       }
     }
-
-  def parse(tokens: List[Token]): Result[TranslationUnit] = generateAST(parseR(tokens, Nil))
-
-  def generateAST(list: List[Result[Stmt]]): Result[TranslationUnit] = {
-    ???
   }
 
+
+  def parse(tokens: List[Token]): Try[TranslationUnit] = generateAST{
+    parseR(tokens, Nil).map(_.map(_._1))
+  }
+
+  def generateAST(list: List[Try[Stmt]]): Try[TranslationUnit] = {
+    list.map(_.isSuccess).indexOf(false) match {
+      case -1 => Success(list.map(_.get)).map(TranslationUnit)
+      case x@_ => list(x).map(_.asInstanceOf[TranslationUnit])
+    }
+  }
 }
 
 object Parser {
@@ -143,4 +179,10 @@ object Parser {
   // Data constructor for error.
   val Bad: (String) => Try[Nothing] =
     (x: String) => Failure(new RuntimeException(x))
+
+  val BadExpect: (Token, Token) => Try[Nothing] = (expected: Token, found: Token) =>
+    Bad(s"Expected <${expected.string}> but found <${found.string}>")
+
+  val BadNothing: (Token) => Try[Nothing] = (expected: Token) =>
+    Bad(s"Expected <${expected.string}> but found nothing")
 }

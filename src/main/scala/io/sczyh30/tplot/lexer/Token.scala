@@ -9,7 +9,7 @@ case class ATOM(x: String) extends Token
 case class NUMBER(x: Double) extends Token
 case class UNKNOWN(part: String) extends Token
 case object ERROR extends Token
-case object END extends Token
+case object EOF extends Token
 
 case object COMMA extends Token
 case object SEMICOLON extends Token
@@ -30,6 +30,7 @@ case object FOR extends Token
 case object FROM extends Token
 case object TO extends Token
 case object LET extends Token
+case object DEF extends Token
 
 case object AND extends Token
 case object OR extends Token

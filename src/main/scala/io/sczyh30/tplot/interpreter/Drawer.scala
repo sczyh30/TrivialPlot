@@ -1,23 +1,27 @@
 package io.sczyh30.tplot.interpreter
 
-import doodle.core._
-import doodle.core.Image._
-import doodle.random._
-import doodle.syntax._
-import doodle.jvm.FileCanvas._
-import doodle.jvm.Java2DCanvas._
-import doodle.backend.StandardInterpreter._
-import doodle.backend.Formats._
+import swing.{MainFrame, SimpleSwingApplication}
+import java.awt.Dimension
+
+import io.sczyh30.tplot.lexer.Lexer
+import io.sczyh30.tplot.parser.Parser
+
+import scala.io.Source
 
 /**
-  * Drawer class.
+  * Drawer runner application.
+  *
+  * @author Eric Zhao
   */
-class Drawer(context: Context) {
-  Point
-}
+object Drawer extends SimpleSwingApplication {
 
-object Drawer {
-  implicit class SeqTypeclass[T](seq: Seq[T]) {
-    def withContext(context: Context) = new Drawer(context)
+  def top = new MainFrame { // TODO: enhance error handling
+    val src = Source.fromFile("src/test/resources/common.tp").getLines.mkString("\n")
+    val ast = new Parser().parse(new Lexer().go(src.toCharArray))
+    val data = ast.map(new Interpreter().interpret).get
+    title = "TrivialPlot Runtime"
+    contents = new DataPanel(data) {
+      preferredSize = new Dimension(1000, 1000)
+    }
   }
 }

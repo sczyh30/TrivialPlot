@@ -25,17 +25,14 @@ class Lexer {
   val keywordMap = HashMap(
     "is" -> IS,
     "=" -> IS,
-    // "origin" -> ORIGIN,
-    // "scale" -> SCALE,
-    // "rot" -> ROT,
-    // "where" -> WHERE,
-    // "color" -> COLOR,
+    "where" -> WHERE,
     "step" -> STEP,
     "draw" -> DRAW,
     "for" -> FOR,
     "from" -> FROM,
     "to" -> TO,
     "let" -> LET,
+    "def" -> DEF,
     "," -> COMMA,
     ";" -> SEMICOLON,
     "{" -> LB,
@@ -71,7 +68,6 @@ class Lexer {
 
     val remains = if (valid) remainsRaw
     else remainsRaw.dropWhile(c => isAlpha(c))
-    // TODO: Should support postfix like `12.3L`
     (tk, remains)
   }
 
@@ -93,7 +89,7 @@ class Lexer {
   }
 
   def go(src: Array[Char]): List[Token] = src match { // TODO: to optimize
-    case Array() => List(END)
+    case Array() => List(EOF)
     case Array('/', '/', remains@_*) => go(skipComment(remains))
     case Array('-', '-', remains@_*) => go(skipComment(remains))
     case Array('&', '&', remains@_*) => AND :: go(remains)

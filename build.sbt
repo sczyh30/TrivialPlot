@@ -2,17 +2,17 @@ name := "TrivialPlot"
 
 version := "0.1-SNAPSHOT"
 
-scalaVersion := "2.11.8"
+scalaVersion := "2.12.1"
 
 libraryDependencies ++= Seq(
-  "com.chuusai" % "shapeless_2.11" % "2.3.2",
-  "underscoreio" %% "doodle" % "0.6.5",
-  "org.specs2" %% "specs2-core" % "3.8.5" % "test"
+  "org.scala-lang.modules" % "scala-swing_2.12" % "2.0.0-M2",
+  "org.specs2" % "specs2-core_2.12" % "3.8.6" % "test"
 )
 
 initialCommands := """|import io.sczyh30.tplot.Runner
                       |import io.sczyh30.tplot.lexer._
                       |import io.sczyh30.tplot.parser._
+                      |import io.sczyh30.tplot.interpreter._
                       |import scala.util.Success
                       |import scala.util.Failure
                       |

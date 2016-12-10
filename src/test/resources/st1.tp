@@ -1,0 +1,31 @@
+--- A simple example
+
+origin is (100, 300);
+rot is 0;
+scale is (1, 1);
+
+for T from 0 to 200 step 1 draw (T, 0);
+
+--- Signature:
+--- draw(from, to, step, func)
+
+--- Reactive pattern (Scala-like syntax):
+--- (a to b).step(c)
+---   .func(f)
+---   .color(BLUE)
+---   .draw
+
+--- Bytecode:
+--- iconst_0
+--- sipush 200
+--- iconst_1
+--- aload_1
+--- invokevirtual #draw
+
+for T from 0 to 150 step 1 draw (0, -T);
+
+for T from 0 to 120 step 1 draw (T, -T);
+
+for T from 0 to 15 step 0.1 draw (T, -(T**2));
+
+for T from 0 to 6 step 0.01 draw (T, -(T**3));

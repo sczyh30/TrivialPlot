@@ -1,10 +1,10 @@
 package io.sczyh30.tplot.parser
 
 import io.sczyh30.tplot.lexer.Token
-import io.sczyh30.tplot.lexer.TokenConverter.ImpCov
+import io.sczyh30.tplot.util.Show._
 
 /**
-  * TrivialPlot parser lint.
+  * TrivialPlot parser linter.
   *
   * @author Eric Zhao
   */
@@ -41,7 +41,7 @@ class TpLint {
   }
 
   def whyNot(advice: String): TpLint = {
-    lint(s"Why not:\n  $advice")
+    lint(s"Why not:\n  $advice\n")
     this
   }
 }

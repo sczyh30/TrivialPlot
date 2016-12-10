@@ -1,0 +1,12 @@
+// Let-clause
+let origin = (300, 300);
+let rot = 0;
+let scale = (1, 1);
+
+for T from -200 to 200 step 0.01 draw (T, -ReLU(T)); // ReLU
+
+let origin = (600, 600);
+let rot = 0;
+let scale = (50, 50);
+
+for T from -5 to 5 step 0.01 draw (T, -sigmoid(T)); // Sigmoid
