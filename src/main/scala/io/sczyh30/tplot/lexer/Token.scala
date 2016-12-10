@@ -18,12 +18,8 @@ case object RB extends Token
 case object LP extends Token
 case object RP extends Token
 
-case object ORIGIN extends Token
-case object SCALE extends Token
 case object IS extends Token
-case object ROT extends Token
 case object WHERE extends Token
-case object COLOR extends Token
 case object STEP extends Token
 case object DRAW extends Token
 case object FOR extends Token

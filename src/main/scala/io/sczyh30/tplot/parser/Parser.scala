@@ -160,7 +160,6 @@ class Parser {
     }
   }
 
-
   def parse(tokens: List[Token]): Try[TranslationUnit] = generateAST{
     parseR(tokens, Nil).map(_.map(_._1))
   }

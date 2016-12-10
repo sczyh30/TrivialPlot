@@ -1,6 +1,6 @@
 name := "TrivialPlot"
 
-version := "0.1-SNAPSHOT"
+version := "0.1.1"
 
 scalaVersion := "2.12.1"
 
@@ -19,9 +19,8 @@ initialCommands := """|import io.sczyh30.tplot.Runner
                       |import scala.language.implicitConversions
                       |
                       |val lexer = new Lexer()
+                      |val parser = new Parser()
                       |implicit def str2ArrayImplicit(str: String): Array[Char] = str.toCharArray
                       |""".stripMargin
-
-resolvers += Resolver.bintrayRepo("underscoreio", "training")
 
 scalacOptions in Test ++= Seq("-Yrangepos")
