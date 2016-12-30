@@ -79,7 +79,6 @@ class Lexer {
       case None => f(src)
     }
 
-
   def extractAtom(src: Array[Char]): (Token, Array[Char]) = {
     (detectAtom(src.takeWhile(isAtomElem))(ATOM), src.dropWhile(isAtomElem))
   }

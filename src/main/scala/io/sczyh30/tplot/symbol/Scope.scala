@@ -9,7 +9,7 @@ import scala.collection.immutable.HashMap
   */
 class Scope(prev: Option[Scope] = None) {
 
-  var table = HashMap(
+  var table: Map[String, Any] = HashMap(
     "PI" -> Math.PI,
     "E" -> Math.E,
     "origin" -> ORIGIN_DEFAULT,

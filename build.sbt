@@ -5,6 +5,7 @@ version := "0.1.1"
 scalaVersion := "2.12.1"
 
 libraryDependencies ++= Seq(
+  "org.scala-lang" % "scala-reflect" % "2.12.1",
   "org.scala-lang.modules" % "scala-swing_2.12" % "2.0.0-M2",
   "org.specs2" % "specs2-core_2.12" % "3.8.6" % "test"
 )

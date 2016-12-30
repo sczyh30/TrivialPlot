@@ -20,15 +20,14 @@ object ParseStream {
     /**
       * Match the provided token.
       * If matched then continue, else fail.
-      * Should only match case objects!
       *
       * @param tk pending match token
       * @return result
       */
     def |@~>(tk: Token): Result[T] = cur match {
       case Success((t, c :: rs)) =>
-        if (c.eq(tk)) Success(t, rs)
-        else Bad(s"Expected token < ${tk.string} > but found < ${c.string} >\nCurrent rs: ${rs}")
+        if (c == tk) Success(t, rs)
+        else Bad(s"Expected token < ${tk.string} > but found < ${c.string} >")
       case failure@Failure(_) => failure
       case _ => Bad("Unexpected error when parsing with |@~> (token-match-strict)")
     }
@@ -46,14 +45,13 @@ object ParseStream {
     /**
       * Match the provided token.
       * If matched then continue, else fail.
-      * Should only match case objects!
       *
       * @return result
       */
     @deprecated
     def @|~>(r: => Result[T]): Result[T] = r match { // FIXME: wrong implementation
       case Success((t, c :: rs)) =>
-        if (c.eq(tk)) Success(t, rs)
+        if (c == tk) Success(t, rs)
         else Bad(s"Expected token < ${tk.string} > but found < ${c.string} >")
       case failure@Failure(_) => failure
       case _ => Bad("Unexpected error when parsing with @|~> (token-match-strict)")

@@ -4,6 +4,7 @@ import io.sczyh30.tplot.symbol.Scope
 import io.sczyh30.tplot.lexer._
 import io.sczyh30.tplot.parser._
 import io.sczyh30.tplot.parser.Parser.Bad
+import io.sczyh30.tplot.util.TypeConverter.TypeCov
 
 import scala.util.{Failure, Success, Try}
 
@@ -14,11 +15,14 @@ import scala.util.{Failure, Success, Try}
   */
 final class Interpreter {
 
+  // TODO: resolve type issues.
+
   val scope = new Scope()
 
-  var points: List[(Double, Double)] = Nil
+  type Point2D = (Double, Double)
+  var points: List[Point2D] = Nil
 
-  def interpret(ast: TranslationUnit): List[(Double, Double)] = {
+  def interpret(ast: TranslationUnit): List[Point2D] = {
     var stmts = ast.stmts
     while (stmts.nonEmpty) {
       stmts.head match {
@@ -30,7 +34,7 @@ final class Interpreter {
     invokeDraw
   }
 
-  def invokeDraw: List[(Double, Double)] = {
+  def invokeDraw: List[Point2D] = {
     println(s"Scope symbol table:\n${scope.table}\n")
     println(s"Points:\n$points")
     points
@@ -51,18 +55,18 @@ final class Interpreter {
     }
   }
 
-  def processDraw(stmt: Stmt): (Double, Double) = stmt match {
+  def processDraw(stmt: Stmt): Point2D = stmt match {
     case Draw(x, y) =>
       (eval(x), eval(y)) match {
-        case (Success(a), Success(b)) if a.isInstanceOf[Double] && b.isInstanceOf[Double] =>
-          (a.asInstanceOf[Double], b.asInstanceOf[Double])
+        case (Success(a), Success(b)) if a.is[Double] && b.is[Double] =>
+          (a.as[Double], b.as[Double])
       }
   }
 
-  def transformPoint(point: (Double, Double)): (Double, Double) = {
-    val (scaleX, scaleY) = scope.table("scale").asInstanceOf[(Double, Double)]
-    val (ox, oy) = scope.table("origin").asInstanceOf[(Double, Double)]
-    val rot = scope.table("rot").asInstanceOf[Double]
+  def transformPoint(point: Point2D): Point2D = {
+    val (scaleX, scaleY) = scope.table("scale").as[Point2D]
+    val (ox, oy) = scope.table("origin").as[Point2D]
+    val rot = scope.table("rot").as[Double]
     val sinR = Math.sin(rot)
     val cosR = Math.cos(rot)
     val (x1, y1) = (point._1 * scaleX, point._2 * scaleY)
@@ -73,8 +77,8 @@ final class Interpreter {
   def updateLocalVariable(expr: Expr, good: Double): Unit = {
     expr match {
       case Ref(varN) => scope.table.get(varN) match {
-        case Some(t) if t.isInstanceOf[Double] => scope.table += (varN -> good)
-        case Some(f) if f.isInstanceOf[Double => Double] => // Function
+        case Some(t) if t.is[Double] => scope.table += (varN -> good)
+        case Some(f) if f.is[Double => Double] => // Function
         case None => scope.table += (varN -> 0.0d)
       }
     }
@@ -91,14 +95,14 @@ final class Interpreter {
     def tryMatch(expr: Expr): Double = {
       expr match {
         case Num(x) => x
-        case Ref(name) if scope.table.exists(_.eq(name)) && scope.table(name).isInstanceOf[Double] =>
-          scope.table(name).asInstanceOf[Double]
+        case Ref(name) if scope.table.exists(_.eq(name)) && scope.table(name).is[Double] =>
+          scope.table(name).as[Double]
         case UnaryOp(SUB, x) =>
           if (x.isInstanceOf[Funcall]) evalFunc(x) match {
             case Success(ffx) => -ffx
           } else
             evalVariable(x) match {
-              case Success(xx) if xx.isInstanceOf[Double] => -xx.asInstanceOf[Double]
+              case Success(xx) if xx.is[Double] => -xx.as[Double]
               case _ => -tryMatch(x)
             }
         case BinOp(ADD, l, r) => pd(l, r)(_ + _)
@@ -111,12 +115,12 @@ final class Interpreter {
     // TODO: refine this
     def pd(left: Expr, right: Expr)(op: (Double, Double) => Double): Double = {
       (evalVariable(left), evalVariable(right)) match {
-        case (Success(l), Success(r)) if l.isInstanceOf[Double] && r.isInstanceOf[Double] =>
-          op(l.asInstanceOf[Double], r.asInstanceOf[Double])
-        case (Success(l), Failure(_)) if l.isInstanceOf[Double] =>
-          op(l.asInstanceOf[Double], tryMatch(right))
-        case (Failure(_), Success(r)) if r.isInstanceOf[Double] =>
-          op(tryMatch(left), r.asInstanceOf[Double])
+        case (Success(l), Success(r)) if l.is[Double] && r.is[Double] =>
+          op(l.as[Double], r.as[Double])
+        case (Success(l), Failure(_)) if l.is[Double] =>
+          op(l.as[Double], tryMatch(right))
+        case (Failure(_), Success(r)) if r.is[Double] =>
+          op(tryMatch(left), r.as[Double])
         case _ => op(tryMatch(left), tryMatch(right))
       }
     }
@@ -124,8 +128,7 @@ final class Interpreter {
     Try(tryMatch(expr))
   }
 
-
-  def evalVec(expr: Expr): Try[(Double, Double)] = Try {
+  def evalVec(expr: Expr): Try[Point2D] = Try {
     expr match {
       case Vector2(x, y) => (evalNumber(x), evalNumber(y)) match {
         case (Success(x1), Success(x2)) => (x1, x2)
@@ -136,10 +139,10 @@ final class Interpreter {
   def evalFunc(expr: Expr): Try[Double] = Try {
     expr match {
       case Funcall(ref, e) => evalVariable(ref) match {
-        case Success(x) if x.isInstanceOf[Double => Double] =>
-          val func = x.asInstanceOf[Double => Double]
+        case Success(x) if x.is[Double => Double] =>
+          val func = x.as[Double => Double]
           eval(e) match {
-            case Success(y) if y.isInstanceOf[Double] => func(y.asInstanceOf[Double])
+            case Success(y) if y.is[Double] => func(y.as[Double])
           }
       }
     }
@@ -147,10 +150,10 @@ final class Interpreter {
 
   def evalVariable(expr: Expr): Try[Any] = expr match {
     case Ref(name) => scope.table.get(name) match {
-      case Some(x) if x.isInstanceOf[Double] => Success(x.asInstanceOf[Double])
-      case Some(x) if x.isInstanceOf[(Double, Double)] => Success(x.asInstanceOf[(Double, Double)])
-      case Some(x) if x.isInstanceOf[Double => Double] => Success(x.asInstanceOf[Double => Double])
-      case Some(_) => Bad("Type mismatch: expected Double but found other")
+      case Some(x) if x.is[Double] => Success(x.as[Double])
+      case Some(x) if x.is[Point2D] => Success(x.as[Point2D])
+      case Some(x) if x.is[Double => Double] => Success(x.as[Double => Double])
+      case Some(_) => Bad("Type mismatch: unknown type discovered")
       case _ => Bad(s"Variable not defined: $name")
     }
     case _ => Bad("Type mismatch: expected Ref but found other")
